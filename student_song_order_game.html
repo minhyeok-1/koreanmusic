@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>노래 가사 순서 맞추기</title>
+  <style>
+    :root{
+      --bg:#f7f4ff;
+      --card:#ffffff;
+      --ink:#25233a;
+      --muted:#74718a;
+      --brand:#7657d6;
+      --brand2:#a78bfa;
+      --yellow:#ffd75e;
+      --green:#2fb777;
+      --red:#ef6674;
+      --line:#e8e2f5;
+      --shadow:0 18px 45px rgba(74,54,139,.14);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:"Pretendard","Noto Sans KR","Noto Sans JP",Arial,sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at 12% 8%,rgba(255,215,94,.35),transparent 24%),
+        radial-gradient(circle at 90% 12%,rgba(118,87,214,.18),transparent 26%),
+        linear-gradient(135deg,#fff9e9,#f6f0ff 55%,#ffeef5);
+      min-height:100vh;
+    }
+    button,input,textarea{font:inherit}
+    .wrap{width:min(1180px,92%);margin:0 auto;padding:30px 0 60px}
+    .hero{display:flex;justify-content:space-between;gap:24px;align-items:center;margin-bottom:22px}
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      background:#241d45;color:#fff;border-radius:999px;
+      padding:9px 15px;font-weight:900;box-shadow:var(--shadow)
+    }
+    h1{font-size:clamp(2rem,5vw,4.2rem);line-height:1.03;margin:17px 0 9px}
+    h1 span{color:var(--brand)}
+    .sub{color:var(--muted);font-weight:700;margin:0}
+    .mascot{
+      width:135px;height:135px;border-radius:36px;background:var(--yellow);
+      display:grid;place-items:center;font-size:66px;border:5px solid #fff;
+      transform:rotate(4deg);box-shadow:var(--shadow)
+    }
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .card{
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(255,255,255,.9);
+      border-radius:26px;padding:22px;box-shadow:var(--shadow);
+      backdrop-filter:blur(8px)
+    }
+    .title-row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}
+    h2{font-size:1.15rem;margin:0}
+    .badge{padding:8px 12px;border-radius:999px;background:#eee8ff;color:var(--brand);font-weight:900}
+    .player{
+      background:linear-gradient(135deg,#2d2453,#7657d6);
+      color:#fff;border-radius:21px;padding:18px
+    }
+    .player-head{display:flex;gap:13px;align-items:center}
+    .play{
+      width:66px;height:66px;border:0;border-radius:50%;background:var(--yellow);
+      color:#332806;font-size:1.5rem;font-weight:900;cursor:pointer
+    }
+    .track{flex:1}
+    .track b{font-size:1.08rem}
+    .track small{display:block;opacity:.75;margin-top:4px}
+    .progress{height:9px;background:rgba(255,255,255,.2);border-radius:999px;margin-top:14px;overflow:hidden;cursor:pointer}
+    .bar{height:100%;width:0;background:var(--yellow)}
+    .player-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+    .mini{border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.1);color:#fff;border-radius:11px;padding:8px 11px;font-weight:800;cursor:pointer}
+    #youtubeBox{
+      display:none;margin-top:14px;border-radius:16px;padding:15px;
+      background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);
+      line-height:1.55;font-weight:700
+    }
+    #youtubeBox button{margin-top:10px}
+    .guide{display:grid;gap:10px}
+    .step{display:flex;gap:11px;align-items:flex-start;padding:12px;border-radius:15px;background:#faf8ff}
+    .num{width:27px;height:27px;min-width:27px;border-radius:50%;display:grid;place-items:center;background:var(--brand);color:#fff;font-weight:900}
+    .step b{display:block;margin-bottom:3px}
+    .step span{font-size:.88rem;color:var(--muted)}
+    .game{margin-top:18px}
+    .answer-zone{
+      min-height:104px;border:2px dashed #cabdf4;border-radius:20px;
+      padding:14px;display:flex;gap:10px;flex-wrap:wrap;align-content:flex-start;
+      background:#fbf9ff
+    }
+    .answer-zone.empty::before{
+      content:"단어를 눌러 순서대로 배치하세요 · 単語を順番に並べてください";
+      color:#9a96aa;font-weight:800;margin:auto
+    }
+    .word-bank{
+      display:flex;gap:10px;flex-wrap:wrap;min-height:84px;
+      padding:14px;border-radius:20px;background:#fff9df;margin-top:15px
+    }
+    .word{
+      border:2px solid #ddd4f5;background:#fff;color:var(--ink);
+      border-radius:14px;padding:11px 15px;font-weight:900;cursor:pointer;
+      box-shadow:0 6px 14px rgba(60,43,111,.09);transition:.15s
+    }
+    .word:hover{transform:translateY(-2px);border-color:var(--brand2)}
+    .word.placed{background:#eee8ff;border-color:var(--brand);color:#4d34a9}
+    .answer-zone.correct{border-color:var(--green);background:#f2fff8}
+    .answer-zone.wrong{border-color:var(--red);background:#fff5f6}
+    .controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:20px}
+    .btn{border:0;border-radius:14px;padding:12px 18px;font-weight:900;cursor:pointer;box-shadow:0 8px 16px rgba(64,46,119,.12)}
+    .btn.primary{background:var(--brand);color:#fff}
+    .btn.secondary{background:#fff;color:var(--brand);border:2px solid #d9d0f5}
+    .btn.yellow{background:var(--yellow);color:#3a2e05}
+    .result{display:none;margin-top:18px;padding:18px;border-radius:18px;text-align:center;background:linear-gradient(135deg,#f1edff,#fff8d8)}
+    .result.show{display:block}
+    .result h3{margin:0 0 7px}
+    .result p{margin:5px 0;color:var(--muted);font-weight:700}
+    .correct-answer{margin-top:10px;background:#fff;border-radius:12px;padding:11px;font-weight:900}
+    details summary{cursor:pointer;font-weight:900;color:var(--brand)}
+    .form{display:grid;gap:12px;margin-top:15px}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    label{font-weight:900;font-size:.88rem;display:grid;gap:6px}
+    input,textarea{
+      width:100%;border:2px solid var(--line);border-radius:13px;
+      padding:11px 12px;background:#fff;color:var(--ink)
+    }
+    textarea{min-height:90px;resize:vertical}
+    input:focus,textarea:focus{outline:none;border-color:var(--brand2)}
+    .notice{font-size:.82rem;color:var(--muted);line-height:1.5}
+    .question-list{display:grid;gap:9px;margin-top:13px}
+    .q-item{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px;border-radius:14px;background:#faf8ff}
+    .q-item b{display:block}
+    .q-item small{color:var(--muted)}
+    .q-actions{display:flex;gap:6px}
+    .tiny{border:0;border-radius:10px;padding:7px 10px;font-weight:800;cursor:pointer}
+    .tiny.go{background:#e9e2ff;color:var(--brand)}
+    .tiny.del{background:#ffe6e9;color:#a72e3c}
+    @media(max-width:820px){.grid{grid-template-columns:1fr}.hero{align-items:flex-start}.mascot{width:92px;height:92px;font-size:48px;border-radius:25px}}
+    @media(max-width:560px){.mascot{display:none}.form-grid{grid-template-columns:1fr}.card{padding:17px}.word{flex:1 1 auto}.wrap{width:94%}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div>
+        <div class="pill">🎧 노래 가사 순서 맞추기</div>
+        <h1>듣고, 단어를<br><span>순서대로 배치해요!</span></h1>
+        <p class="sub">音声を聞いて、歌詞の単語を正しい順番に並べよう！</p>
+      </div>
+      <div class="mascot">🐻</div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <div class="title-row">
+          <h2>🔊 문제 음원</h2>
+          <span class="badge" id="roundBadge">3 / 3</span>
+        </div>
+        <div class="player">
+          <div class="player-head">
+            <button class="play" id="playBtn">▶</button>
+            <div class="track">
+              <b id="trackTitle">Love Dive - IVE</b>
+              <small id="trackMeta">82초 ~ 101초</small>
+              <div class="progress" id="progress"><div class="bar" id="bar" style="width: 0%;"></div></div>
+            </div>
+          </div>
+          <div class="player-actions">
+            <button class="mini" id="slowBtn">🐢 0.75배</button>
+            <button class="mini" id="normalBtn">⚡ 1배</button>
+            <button class="mini" id="openLinkBtn">🔗 원본 링크 열기</button>
+          </div>
+          <audio id="audio" preload="metadata"></audio>
+          <div id="youtubeBox" style="display: block;">
+        유튜브는 로컬 HTML에서 내장 재생이 제한될 수 있습니다.<br>
+        아래 버튼을 누르면 <b>82초부터</b> 원본 영상이 열립니다.
+        <br><button class="mini" id="youtubeOpenInside">▶ 유튜브에서 구간 열기</button></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="title-row"><h2>🎮 게임 방법</h2></div>
+        <div class="guide">
+          <div class="step"><div class="num">1</div><div><b>설정된 구간을 들어요</b><span>指定された部分を聞きます。</span></div></div>
+          <div class="step"><div class="num">2</div><div><b>단어 카드를 순서대로 눌러요</b><span>単語カードを順番に押します。</span></div></div>
+          <div class="step"><div class="num">3</div><div><b>정답 확인을 눌러요</b><span>答えを確認します。</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card game">
+      <div class="title-row">
+        <h2>✍️ 가사를 순서대로 완성하세요</h2>
+        <span class="badge" id="scoreBadge">점수 0</span>
+      </div>
+
+      <div class="answer-zone empty" id="answerZone"></div>
+      <div class="word-bank" id="wordBank"><button class="word" data-uid="1783098302214-0-0.9400980998540038">망설일</button><button class="word" data-uid="1783098302215-1-0.8484540701479955">확인해</button><button class="word" data-uid="1783098302215-2-0.7613530710223461">돼</button><button class="word" data-uid="1783098302215-3-0.2380044259299947">가장</button><button class="word" data-uid="1783098302215-4-0.5996135922493337">오면</button><button class="word" data-uid="1783098302215-5-0.13147724183013132">맘</button><button class="word" data-uid="1783098302215-6-0.05758100610532024">걸</button><button class="word" data-uid="1783098302215-7-0.9681875685529019">내</button><button class="word" data-uid="1783098302215-8-0.7709175514695427">직접</button><button class="word" data-uid="1783098302215-9-0.6922425237549941">두</button><button class="word" data-uid="1783098302215-10-0.9057049732650314">되는</button><button class="word" data-uid="1783098302215-11-0.43064005284249385">눈으로</button><button class="word" data-uid="1783098302215-12-0.9305989032628418">시간은</button><button class="word" data-uid="1783098302215-13-0.9270185731100842">들어와</button><button class="word" data-uid="1783098302215-14-0.9934729334183715">3초면</button><button class="word" data-uid="1783098302215-15-0.385099254354369">Ooh</button><button class="word" data-uid="1783098302215-16-0.19900885838553406">깊은데로</button><button class="word" data-uid="1783098302215-17-0.39168778997439624">Ooh</button></div>
+
+      <div class="controls">
+        <button class="btn secondary" id="undoBtn">↶ 한 단어 취소</button>
+        <button class="btn secondary" id="resetBtn">↺ 다시 배치</button>
+        <button class="btn primary" id="checkBtn">✅ 정답 확인</button>
+        <button class="btn yellow" id="nextBtn">다음 문제 ➜</button>
+      </div>
+
+      <div class="result" id="result">
+        <h3 id="resultTitle"></h3>
+        <p id="resultText"></p>
+        <div class="correct-answer" id="correctAnswer"></div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:18px">
+      <details open="">
+        <summary>🛠️ 교사용 문제 만들기</summary>
+        <div class="form">
+          <div class="form-grid">
+            <label>문제 제목
+              <input id="qTitle" placeholder="예: 최신 노래 1번">
+            </label>
+            <label>음원 링크
+              <input id="qLink" placeholder="YouTube 또는 mp3 링크">
+            </label>
+            <label>시작 시간(초)
+              <input id="qStart" type="number" min="0" step="0.1" value="0">
+            </label>
+            <label>종료 시간(초)
+              <input id="qEnd" type="number" min="0.1" step="0.1" value="10">
+            </label>
+          </div>
+
+          <label>정답 문장
+            <textarea id="qAnswer" placeholder="예: 오늘도 너와 함께 걷고 싶어"></textarea>
+          </label>
+
+          <label>단어 나누기
+            <select id="splitMode" style="width:100%;border:2px solid var(--line);border-radius:13px;padding:11px 12px;background:#fff">
+              <option value="space">띄어쓰기 기준</option>
+              <option value="manual">슬래시(/) 기준</option>
+            </select>
+          </label>
+
+          <p class="notice">
+            유튜브는 브라우저 보안 정책 때문에 컴퓨터에서 HTML 파일을 직접 열면 내장 재생이 차단될 수 있습니다.
+            이 경우 원본 영상이 시작 시간부터 새 창에서 열립니다. GitHub Pages처럼 웹에 배포하면 내장 플레이어를 사용할 수 있습니다.
+            mp3·wav 등 직접 음원 링크는 웹 오디오 플레이어에서 해당 구간만 재생됩니다.
+            슬래시 기준을 선택하면 <b>오늘도 / 너와 함께 / 걷고 싶어</b>처럼 원하는 덩어리로 나눌 수 있습니다.
+          </p>
+
+          <div class="controls" style="justify-content:flex-start;margin-top:0">
+            <button class="btn primary" id="addQuestionBtn">➕ 문제 추가</button>
+            <button class="btn secondary" id="exportBtn">💾 JSON 저장</button>
+            <button class="btn yellow" id="exportHtmlBtn">📦 학생용 HTML 저장</button>
+            <label class="btn secondary" style="display:inline-flex;align-items:center;cursor:pointer">
+              📂 문제 불러오기
+              <input type="file" id="importFile" accept=".json,application/json" style="display:none">
+            </label>
+          </div>
+          <p class="notice" id="formMsg">✅ 새 문제가 추가되었습니다.</p>
+          <div class="question-list" id="questionList"><div class="q-item"><div><b>1. OMG- 뉴진스</b><small>30초 ~ 42초 · 15개 카드</small></div><div class="q-actions"><button class="tiny go">열기</button><button class="tiny del">삭제</button></div></div><div class="q-item"><div><b>2. 오늘만 I LOVE YOU - 보이넥스트도어</b><small>48초 ~ 72초 · 20개 카드</small></div><div class="q-actions"><button class="tiny go">열기</button><button class="tiny del">삭제</button></div></div><div class="q-item"><div><b>3. Love Dive - IVE</b><small>82초 ~ 101초 · 18개 카드</small></div><div class="q-actions"><button class="tiny go">열기</button><button class="tiny del">삭제</button></div></div></div>
+        </div>
+      </details>
+    </section>
+  </main>
+
+<script>
+const sampleQuestions = [
+  {
+    "title": "OMG- 뉴진스",
+    "link": "https://youtu.be/hc32lb0po9U?si=iFmN1htDSw9f83fw",
+    "start": 30,
+    "end": 42,
+    "answer": "멀리든 언제든지 달려와 바쁜 척도 없이 넌 나타나 이게 말이 되니 난 물어봐 너는 말야",
+    "splitMode": "space"
+  },
+  {
+    "title": "오늘만 I LOVE YOU - 보이넥스트도어",
+    "link": "https://youtu.be/XVrO_3lnbig?si=QKmX23dAQvh8HXlk",
+    "start": 48,
+    "end": 72,
+    "answer": "그날 이후로 난 이렇게 살아 웃기지 그런데 오늘만 I love you 愛してる, 사랑해라 말하고 말하고 후회하면 좀 괜찮을까? Love you",
+    "splitMode": "space"
+  },
+  {
+    "title": "Love Dive - IVE",
+    "link": "https://youtu.be/qYh3NhMRDjY?si=G6Iqpoon92qnWllr",
+    "start": 82,
+    "end": 101,
+    "answer": "직접 들어와 두 눈으로 확인해 내 맘 가장 깊은데로 오면 돼 Ooh 망설일 시간은 Ooh 3초면 되는 걸",
+    "splitMode": "space"
+  }
+];
+
+let questions = sampleQuestions;
+let current = 0;
+let score = 0;
+let arranged = [];
+let checked = false;
+let youtubeTimer = null;
+
+const $ = s => document.querySelector(s);
+const audio = $("#audio");
+const answerZone = $("#answerZone");
+const wordBank = $("#wordBank");
+const youtubeBox = $("#youtubeBox");
+
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function getParts(q){
+  const raw=q.answer.trim();
+  if(q.splitMode==="manual"){
+    return raw.split("/").map(v=>v.trim()).filter(Boolean);
+  }
+  return raw.split(/\s+/).filter(Boolean);
+}
+
+function parseYouTubeId(url){
+  try{
+    const u=new URL(url);
+    if(u.hostname.includes("youtu.be")) return u.pathname.slice(1).split("/")[0];
+    if(u.hostname.includes("youtube.com")){
+      if(u.pathname.startsWith("/shorts/")) return u.pathname.split("/")[2];
+      if(u.pathname.startsWith("/embed/")) return u.pathname.split("/")[2];
+      return u.searchParams.get("v");
+    }
+  }catch(e){}
+  return null;
+}
+
+function makeYouTubeStartUrl(url,start){
+  const id=parseYouTubeId(url);
+  if(!id) return url;
+  return `https://www.youtube.com/watch?v=${id}&t=${Math.floor(start)}s`;
+}
+
+function isDirectAudio(url){
+  return /\.(mp3|wav|ogg|m4a|aac)(\?|#|$)/i.test(url);
+}
+
+function stopAll(){
+  audio.pause();
+  clearTimeout(youtubeTimer);
+  $("#playBtn").textContent="▶";
+}
+
+function setupMedia(){
+  const q=questions[current];
+  stopAll();
+  audio.removeAttribute("src");
+  audio.load();
+  youtubeBox.innerHTML="";
+  youtubeBox.style.display="none";
+
+  const ytId=parseYouTubeId(q.link);
+  if(ytId){
+    youtubeBox.style.display="block";
+    const localFile=location.protocol==="file:";
+    if(localFile){
+      youtubeBox.innerHTML=`
+        유튜브는 로컬 HTML에서 내장 재생이 제한될 수 있습니다.<br>
+        아래 버튼을 누르면 <b>${q.start}초부터</b> 원본 영상이 열립니다.
+        <br><button class="mini" id="youtubeOpenInside">▶ 유튜브에서 구간 열기</button>`;
+      setTimeout(()=>{
+        const b=$("#youtubeOpenInside");
+        if(b) b.onclick=()=>window.open(makeYouTubeStartUrl(q.link,q.start),"_blank","noopener");
+      },0);
+    }else{
+      const src=`https://www.youtube-nocookie.com/embed/${ytId}?start=${Math.floor(q.start)}&end=${Math.ceil(q.end)}&controls=1&rel=0&playsinline=1`;
+      youtubeBox.innerHTML=`<iframe style="width:100%;aspect-ratio:16/9;border:0;border-radius:12px" src="${src}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+    }
+  }else if(q.link){
+    audio.src=q.link;
+  }
+}
+
+function render(){
+  const q=questions[current];
+  arranged=[];
+  checked=false;
+  answerZone.className="answer-zone empty";
+  answerZone.innerHTML="";
+  wordBank.innerHTML="";
+  $("#result").classList.remove("show");
+  $("#roundBadge").textContent=`${current+1} / ${questions.length}`;
+  $("#trackTitle").textContent=q.title || `문제 ${current+1}`;
+  $("#trackMeta").textContent=`${q.start}초 ~ ${q.end}초`;
+  $("#scoreBadge").textContent=`점수 ${score}`;
+
+  shuffle(getParts(q)).forEach((text,idx)=>{
+    const btn=document.createElement("button");
+    btn.className="word";
+    btn.textContent=text;
+    btn.dataset.uid=`${Date.now()}-${idx}-${Math.random()}`;
+    btn.onclick=()=>placeWord(btn);
+    wordBank.appendChild(btn);
+  });
+
+  setupMedia();
+  renderQuestionList();
+}
+
+function placeWord(btn){
+  if(checked || btn.classList.contains("placed")) return;
+  btn.classList.add("placed");
+  arranged.push({text:btn.textContent,uid:btn.dataset.uid});
+  renderAnswer();
+}
+
+function renderAnswer(){
+  answerZone.innerHTML="";
+  answerZone.classList.toggle("empty",arranged.length===0);
+  arranged.forEach((item,index)=>{
+    const btn=document.createElement("button");
+    btn.className="word placed";
+    btn.textContent=item.text;
+    btn.onclick=()=>{
+      if(checked) return;
+      arranged.splice(index,1);
+      const original=[...wordBank.children].find(b=>b.dataset.uid===item.uid);
+      if(original) original.classList.remove("placed");
+      renderAnswer();
+    };
+    answerZone.appendChild(btn);
+  });
+}
+
+$("#undoBtn").onclick=()=>{
+  if(checked || !arranged.length) return;
+  const item=arranged.pop();
+  const original=[...wordBank.children].find(b=>b.dataset.uid===item.uid);
+  if(original) original.classList.remove("placed");
+  renderAnswer();
+};
+
+$("#resetBtn").onclick=()=>{
+  if(checked) return render();
+  arranged=[];
+  [...wordBank.children].forEach(b=>b.classList.remove("placed"));
+  renderAnswer();
+};
+
+$("#checkBtn").onclick=()=>{
+  if(checked) return;
+  const correct=getParts(questions[current]);
+  if(arranged.length!==correct.length){
+    alert("모든 단어를 배치해 주세요! / すべての単語を並べてください。");
+    return;
+  }
+  checked=true;
+  const ok=arranged.map(v=>v.text).join("\u0001")===correct.join("\u0001");
+  answerZone.classList.remove("empty");
+  answerZone.classList.add(ok?"correct":"wrong");
+  if(ok) score+=10;
+  $("#scoreBadge").textContent=`점수 ${score}`;
+  $("#resultTitle").textContent=ok?"🎉 정답입니다!":"👏 거의 다 왔어요!";
+  $("#resultText").textContent=ok?"순서를 정확하게 맞혔어요.":"정답 순서를 확인하고 다시 들어보세요.";
+  $("#correctAnswer").textContent=`정답: ${correct.join(" ")}`;
+  $("#result").classList.add("show");
+};
+
+$("#nextBtn").onclick=()=>{
+  current=(current+1)%questions.length;
+  render();
+};
+
+$("#playBtn").onclick=()=>{
+  const q=questions[current];
+  const ytId=parseYouTubeId(q.link);
+  if(ytId){
+    if(location.protocol==="file:"){
+      window.open(makeYouTubeStartUrl(q.link,q.start),"_blank","noopener");
+    }else{
+      youtubeBox.scrollIntoView({behavior:"smooth",block:"center"});
+    }
+    return;
+  }
+  if(!q.link){
+    alert("교사용 설정에서 음원 링크를 입력해 주세요.");
+    return;
+  }
+  if(audio.paused){
+    audio.currentTime=q.start;
+    audio.play().then(()=>$("#playBtn").textContent="⏸").catch(()=>{
+      alert("음원을 재생할 수 없습니다. 직접 음원 링크인지 확인해 주세요.");
+    });
+  }else{
+    audio.pause();
+    $("#playBtn").textContent="▶";
+  }
+};
+
+audio.addEventListener("timeupdate",()=>{
+  const q=questions[current];
+  const span=Math.max(q.end-q.start,.1);
+  const ratio=Math.min(Math.max((audio.currentTime-q.start)/span,0),1);
+  $("#bar").style.width=`${ratio*100}%`;
+  if(audio.currentTime>=q.end){
+    audio.pause();
+    audio.currentTime=q.start;
+    $("#playBtn").textContent="▶";
+  }
+});
+audio.addEventListener("ended",()=>$("#playBtn").textContent="▶");
+
+$("#progress").onclick=e=>{
+  const q=questions[current];
+  if(!q.link || parseYouTubeId(q.link)) return;
+  const r=e.currentTarget.getBoundingClientRect();
+  const ratio=(e.clientX-r.left)/r.width;
+  audio.currentTime=q.start+(q.end-q.start)*ratio;
+};
+
+$("#slowBtn").onclick=()=>audio.playbackRate=.75;
+$("#normalBtn").onclick=()=>audio.playbackRate=1;
+$("#openLinkBtn").onclick=()=>{
+  const q=questions[current];
+  if(!q.link) return;
+  const link=parseYouTubeId(q.link) ? makeYouTubeStartUrl(q.link,q.start) : q.link;
+  window.open(link,"_blank","noopener");
+};
+
+function save(){
+  localStorage.setItem("orderSongQuestions",JSON.stringify(questions));
+}
+
+$("#addQuestionBtn").onclick=()=>{
+  try{
+    const title=$("#qTitle").value.trim() || `문제 ${questions.length+1}`;
+    const link=$("#qLink").value.trim();
+    const start=Number($("#qStart").value);
+    const end=Number($("#qEnd").value);
+    const answer=$("#qAnswer").value.trim();
+    const splitMode=$("#splitMode").value;
+
+    if(!link) throw new Error("음원 링크를 입력해 주세요.");
+    if(!answer) throw new Error("정답 문장을 입력해 주세요.");
+    if(!Number.isFinite(start)||!Number.isFinite(end)||start<0||end<=start){
+      throw new Error("시작·종료 시간을 확인해 주세요.");
+    }
+
+    const q={title,link,start,end,answer,splitMode};
+    if(getParts(q).length<2) throw new Error("정답은 두 단어 이상으로 나누어져야 합니다.");
+
+    questions.push(q);
+    save();
+    current=questions.length-1;
+    $("#qTitle").value="";
+    $("#qLink").value="";
+    $("#qStart").value="0";
+    $("#qEnd").value="10";
+    $("#qAnswer").value="";
+    $("#formMsg").textContent="✅ 새 문제가 추가되었습니다.";
+    render();
+  }catch(err){
+    $("#formMsg").textContent="❌ "+err.message;
+  }
+};
+
+function renderQuestionList(){
+  const box=$("#questionList");
+  box.innerHTML="";
+  questions.forEach((q,idx)=>{
+    const row=document.createElement("div");
+    row.className="q-item";
+    const info=document.createElement("div");
+    info.innerHTML=`<b>${idx+1}. ${q.title}</b><small>${q.start}초 ~ ${q.end}초 · ${getParts(q).length}개 카드</small>`;
+    const actions=document.createElement("div");
+    actions.className="q-actions";
+
+    const go=document.createElement("button");
+    go.className="tiny go";
+    go.textContent="열기";
+    go.onclick=()=>{current=idx;render();};
+
+    const del=document.createElement("button");
+    del.className="tiny del";
+    del.textContent="삭제";
+    del.onclick=()=>{
+      if(questions.length===1){
+        alert("문제는 최소 1개가 필요합니다.");
+        return;
+      }
+      questions.splice(idx,1);
+      if(current>=questions.length) current=questions.length-1;
+      save();
+      render();
+    };
+
+    actions.append(go,del);
+    row.append(info,actions);
+    box.appendChild(row);
+  });
+}
+
+$("#exportBtn").onclick=()=>{
+  const blob=new Blob([JSON.stringify(questions,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="song-order-questions.json";
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+$("#exportHtmlBtn").onclick=()=>{
+  try{
+    let source="<!DOCTYPE html>\n"+document.documentElement.outerHTML;
+    const embedded=JSON.stringify(questions,null,2).replace(/<\//g,"<\\/");
+    source=source.replace(
+      /const sampleQuestions = \[[\s\S]*?\];/,
+      `const sampleQuestions = ${embedded};`
+    );
+    source=source.replace(
+      /let questions = JSON\.parse\(localStorage\.getItem\("orderSongQuestions"\) \|\| "null"\) \|\| sampleQuestions;/,
+      'let questions = sampleQuestions;'
+    );
+    const blob=new Blob([source],{type:"text/html;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;
+    a.download="student_song_order_game.html";
+    a.click();
+    URL.revokeObjectURL(url);
+    $("#formMsg").textContent="✅ 현재 문제들이 포함된 학생용 HTML을 저장했습니다.";
+  }catch(err){
+    $("#formMsg").textContent="❌ HTML 저장 실패: "+err.message;
+  }
+};
+
+$("#importFile").onchange=async e=>{
+  const file=e.target.files[0];
+  if(!file) return;
+  try{
+    const parsed=JSON.parse(await file.text());
+    if(!Array.isArray(parsed)||!parsed.length) throw new Error("문제 데이터가 없습니다.");
+    parsed.forEach(q=>{
+      if(!q.answer||!q.link||Number(q.end)<=Number(q.start)) throw new Error("문제 형식이 올바르지 않습니다.");
+    });
+    questions=parsed;
+    save();
+    current=0;
+    score=0;
+    $("#formMsg").textContent="✅ 문제를 불러왔습니다.";
+    render();
+  }catch(err){
+    $("#formMsg").textContent="❌ 불러오기 실패: "+err.message;
+  }
+};
+
+render();
+</script>
+
+
+</body></html>
